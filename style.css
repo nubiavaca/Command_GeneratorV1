@@ -61,19 +61,24 @@ textarea.code-output { font-family: 'Fira Code', 'Courier New', monospace; heigh
 .history-edit-btn:hover { background: var(--link-color); color: #11111b; }
 .history-item-placeholder { font-size: 12px; color: #a6adc8; text-align: center; padding: 10px 0; }
 
-/* --- CONTENEDOR EN LÍNEA PARA LOS BOTONES DE LA NUBE --- */
+/* --- CONTENEDOR EN LÍNEA OPTIMIZADO PARA LOS BOTONES DE LA NUBE --- */
 .cloud-buttons-inline {
-    display: flex;
-    gap: 12px;
-    width: 100%;
+    display: flex !important;
+    flex-direction: row !important; /* Fuerza la alineación horizontal lado a lado */
+    gap: 12px !important;
+    width: 100% !important;
+    align-items: center !important;
 }
 
+/* Fuerza el reparto equitativo del espacio ignorando estilos en bloque previos */
 .cloud-buttons-inline .btn {
-    flex: 1 1 0%;
-    width: 100%;
-    box-sizing: border-box;
+    flex: 1 1 0% !important; 
+    width: auto !important; 
+    box-sizing: border-box !important;
+    margin: 0 !important; 
 }
 
+/* Control estricto de ocultación para que el de guardar use el 100% si no está editando */
 .cloud-buttons-inline #btn-cloud-cancel.hidden {
     display: none !important;
 }
