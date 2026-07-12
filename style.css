@@ -1,0 +1,50 @@
+:root {
+    --bg-color: #1e1e2e;
+    --card-bg: #252538;
+    --text-color: #cdd6f4;
+    --accent-color: #f5c2e7;
+    --link-color: #89b4fa;
+    --input-bg: #313244;
+    --border-color: #45475a;
+    --green: #a6e3a1;
+    --orange: #fab387;
+}
+body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 10px; display: flex; justify-content: center; }
+.container { max-width: 850px; width: 100%; background: var(--card-bg); padding: 15px 25px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
+h1 { color: var(--link-color); margin-top: 0; font-size: 20px; border-bottom: 2px solid var(--border-color); padding-bottom: 4px; margin-bottom: 10px; }
+h3 { color: var(--accent-color); margin-bottom: 6px; margin-top: 5px; font-size: 14px; }
+.form-card { background: rgba(0,0,0,0.1); padding: 10px 15px; border-radius: 8px; border: 1px dashed var(--border-color); }
+.form-group { margin-bottom: 8px; display: flex; flex-direction: column; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 15px; }
+.triple-row { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 10px; }
+
+.url-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: flex-end; }
+.regex-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: flex-end; }
+
+.full-width { grid-column: span 2; }
+label { font-size: 11px; font-weight: 600; margin-bottom: 3px; display: block; color: #a6adc8; }
+input[type="text"], select, textarea { width: 100%; padding: 6px 10px; background: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 6px; box-sizing: border-box; font-size: 13px; }
+input:focus, select:focus, textarea:focus { border-color: var(--link-color); outline: none; }
+
+.radio-group { display: flex; gap: 15px; background: var(--input-bg); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color); margin-top: 2px; }
+.radio-container, .checkbox-container { display: flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; }
+.radio-container input, .checkbox-container input { width: 14px; height: 14px; cursor: pointer; accent-color: var(--link-color); }
+.radio-text, .checkbox-text { font-size: 13px; font-weight: 600; color: #cdd6f4; }
+
+.checkbox-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: var(--input-bg); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color); margin-top: 2px; }
+
+.inline-check-wrapper { background: var(--input-bg); border: 1px solid var(--border-color); padding: 0 12px; border-radius: 6px; height: 31px; box-sizing: border-box; display: flex; align-items: center; }
+
+textarea.code-output { font-family: 'Fira Code', 'Courier New', monospace; height: 80px; background: #11111b; color: var(--green); resize: vertical; padding: 10px; font-size: 12px; line-height: 1.4; width: 100%; box-sizing: border-box; }
+
+.buttons-container { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; }
+.btn { color: #11111b; font-weight: bold; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-size: 14px; transition: opacity 0.2s; }
+.btn:hover { opacity: 0.9; }
+.btn-test { background: var(--link-color); }
+.btn-launcher { background: var(--orange); }
+
+.inline-btn { background: #45475a; color: #cdd6f4; border: 1px solid var(--border-color); padding: 0 12px; border-radius: 6px; font-weight: bold; cursor: pointer; height: 31px; font-size: 12px; box-sizing: border-box; }
+.inline-btn:hover { background: #585b70; color: #fff; }
+
+.hidden { display: none !important; }
