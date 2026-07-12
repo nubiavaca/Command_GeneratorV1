@@ -88,7 +88,7 @@ function analyzeAndParsePastedCommand(commandStr) {
         document.getElementById('search_url').value = cleanUrl;
     }
 
-    // 4. Main Regex (Limpia modificadores, fin de línea $ y las almohadillas # al importar)
+    // 4. Main Regex (Limpia modificadores, fin de línea $, comillas dobles y almohadillas al importar)
     const regexMatch = commandStr.match(/"curl-impersonate"\s+"[^"]+"\s+"[^"]+"\s+'([^']+)'/);
     if (regexMatch) {
         let cleanRegex = regexMatch[1];
@@ -98,9 +98,11 @@ function analyzeAndParsePastedCommand(commandStr) {
         } else {
             document.getElementById('chk_regex_si').checked = false;
         }
-        // Quita el '$' si existiera al final, y remueve las almohadillas externas '#'
         if (cleanRegex.endsWith('$')) cleanRegex = cleanRegex.slice(0, -1);
         if (cleanRegex.startsWith('#') && cleanRegex.endsWith('#')) cleanRegex = cleanRegex.slice(1, -1);
+        
+        // Remover comillas dobles si envolvían completamente la expresión interna
+        if (cleanRegex.startsWith('"') && cleanRegex.endsWith('"')) cleanRegex = cleanRegex.slice(1, -1);
         
         document.getElementById('main_regex').value = cleanRegex;
     }
@@ -130,7 +132,7 @@ function analyzeAndParsePastedCommand(commandStr) {
         document.querySelector('input[name="conf_field_type"][value="NONE"]').checked = true;
     }
 
-    // Confirmation Regex (Limpia modificadores, fin de línea $ y las almohadillas # al importar)
+    // Confirmation Regex (Limpia modificadores, fin de línea $, comillas dobles y almohadillas al importar)
     const confRegexMatch = commandStr.match(/--confirmation-regex\s+'([^']+)'/);
     if (confRegexMatch) {
         let cleanConfRegex = confRegexMatch[1];
@@ -140,9 +142,11 @@ function analyzeAndParsePastedCommand(commandStr) {
         } else {
             document.getElementById('chk_conf_regex_si').checked = false;
         }
-        // Quita el '$' si existiera al final, y remueve las almohadillas externas '#'
         if (cleanConfRegex.endsWith('$')) cleanConfRegex = cleanConfRegex.slice(0, -1);
         if (cleanConfRegex.startsWith('#') && cleanConfRegex.endsWith('#')) cleanConfRegex = cleanConfRegex.slice(1, -1);
+        
+        // Remover comillas dobles si envolvían completamente la expresión interna
+        if (cleanConfRegex.startsWith('"') && cleanConfRegex.endsWith('"')) cleanConfRegex = cleanConfRegex.slice(1, -1);
         
         document.getElementById('conf_regex').value = cleanConfRegex;
     }
@@ -183,9 +187,9 @@ function generateCommand(mode) {
         cmd += ` "${getVal('search_url')}"`;
     }
     
-    // Inyección automática de caracteres "#" en la Regex Principal sin el "$"
+    // Inyección automática de comillas dobles y caracteres "#" en la Regex Principal
     if (getVal('main_regex')) {
-        let regexText = `#${getVal('main_regex')}#`;
+        let regexText = `#"${getVal('main_regex')}"#`;
         if (checkActive('chk_regex_si')) regexText += 'si';
         cmd += ` '${regexText}'`;
     }
@@ -205,9 +209,9 @@ function generateCommand(mode) {
     if (confirmationType !== 'NONE') {
         cmd += ` --confirmation-field ${confirmationType}`;
         
-        // Inyección automática de caracteres "#" en la Confirmation Regex sin el "$"
+        // Inyección automática de comillas dobles y caracteres "#" en la Confirmation Regex
         if (getVal('conf_regex')) {
-            let confRegexText = `#${getVal('conf_regex')}#`;
+            let confRegexText = `#"${getVal('conf_regex')}"#`;
             if (checkActive('chk_conf_regex_si')) confRegexText += 'si';
             cmd += ` --confirmation-regex '${confRegexText}'`;
         }

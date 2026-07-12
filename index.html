@@ -70,7 +70,7 @@
                 <div class="form-group full-width url-row">
                     <div style="flex-grow: 1;">
                         <label>URL Reconstruction Expression **Optional</label>
-                        <input type="text" id="url_build" value="" placeholder="E.g., https://www.url.com/itm/{%s1}">
+                        <input type="text" id="url_build" value="" placeholder="E.g., https://www.ebay.de/itm/{%s1}">
                     </div>
                     <button type="button" class="btn inline-btn" onclick="injectPlaceholderToUrlBuild()" title="Insert {%s1} at cursor position">{%s1}</button>
                 </div>
@@ -100,7 +100,7 @@
                 <div class="form-group full-width regex-row" id="wrapper-conf-regex">
                     <div style="flex-grow: 1;">
                         <label>Confirmation Regex</label>
-                        <input type="text" id="conf_regex" value='"gtin12":.*?"([^"]+)"'>
+                        <input type="text" id="conf_regex" value='gtin12":.*?"([^"]+)"'>
                     </div>
                     <label class="checkbox-container inline-check-wrapper" title="line break modifier">
                         <input type="checkbox" id="chk_conf_regex_si">
@@ -165,7 +165,7 @@
 
     <!-- COLUMNA DERECHA: Barra lateral del historial del equipo -->
     <div class="sidebar">
-        <h3>☁️ Saved Configs</h3>
+        <h3>☁️ Team Saved Configs</h3>
         <input type="text" id="search-history" placeholder="🔍 Filter by Client or Rival ID..." style="margin-bottom: 12px; font-size: 12px; padding: 5px 8px;">
         <div id="history-list" class="history-list">
             <div class="history-item-placeholder">Loading team commands...</div>
