@@ -1,3 +1,4 @@
+// Inicialización de Supabase (Con identificador único corregido)
 const SUPABASE_URL = "https://iztkmcrtfmzlzavguuvl.supabase.co"; 
 const SUPABASE_ANON_KEY = "sb_publishable_l2E5C5qCL-HnzuVGeTiidg_wGEN8glj";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -5,7 +6,7 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const BASE_PHP = "sudo php /home/netrivals/bin/console";
 const FIXED_METHOD = "curl-impersonate";
 let importLocked = false;
-let cachedTeamCommands = [];
+let cachedTeamCommands = []; // Guarda en memoria local los datos de la nube para búsquedas flash
 
 function getVal(id) {
     const el = document.getElementById(id);
@@ -53,11 +54,13 @@ function injectPlaceholderToUrl() { insertAtCursor(document.getElementById('sear
 function injectPlaceholderToPost() { insertAtCursor(document.getElementById('post_payload'), '%s'); }
 function injectPlaceholderToUrlBuild() { insertAtCursor(document.getElementById('url_build'), '{%s1}'); }
 
+// PARSER: Procesa comandos pegados manualmente e identifica inteligentemente cruces con la BD
 function analyzeAndParsePastedCommand(commandStr) {
     if (!commandStr.includes("php /home/netrivals/bin/console")) return;
     
     importLocked = true;
 
+    // 1. Store IDs
     const storeMatches = commandStr.match(/(?:ean-biter-by-store-id(?:-launcher)?)\s+(\d+)\s+(\d+)/);
     let extractedClient = '';
     let extractedRival = '';
@@ -68,6 +71,7 @@ function analyzeAndParsePastedCommand(commandStr) {
         document.getElementById('rival_store_id').value = extractedRival;
     }
 
+    // 2. Proxy
     const proxyMatch = commandStr.match(/"curl-impersonate"\s+"([^"]+)"/);
     if (proxyMatch) {
         const proxySelector = document.getElementById('proxy');
@@ -76,6 +80,7 @@ function analyzeAndParsePastedCommand(commandStr) {
         }
     }
 
+    // 3. Search URL (Limpia parámetros dinámicos previos si existen)
     const urlMatch = commandStr.match(/"curl-impersonate"\s+"[^"]+"\s+"([^"]+)"/);
     if (urlMatch) {
         let cleanUrl = urlMatch[1];
@@ -83,6 +88,7 @@ function analyzeAndParsePastedCommand(commandStr) {
         document.getElementById('search_url').value = cleanUrl;
     }
 
+    // 4. Main Regex
     const regexMatch = commandStr.match(/"curl-impersonate"\s+"[^"]+"\s+"[^"]+"\s+'([^']+)'/);
     if (regexMatch) {
         let cleanRegex = regexMatch[1];
@@ -95,6 +101,7 @@ function analyzeAndParsePastedCommand(commandStr) {
         document.getElementById('main_regex').value = cleanRegex;
     }
 
+    // 5. Parámetros explícitos
     const postMatch = commandStr.match(/--post\s+'([^']+)'/);
     document.getElementById('post_payload').value = postMatch ? postMatch[1] : '';
 
@@ -104,11 +111,13 @@ function analyzeAndParsePastedCommand(commandStr) {
     const headersMatch = commandStr.match(/--get-content-method-options\s+'([^']+)'/);
     document.getElementById('method_options').value = headersMatch ? headersMatch[1] : '';
 
+    // 6. Checkboxes avanzados
     document.getElementById('chk_suggest').checked = commandStr.includes("--connection-type 'to_suggest'");
     document.getElementById('chk_ref').checked = commandStr.includes('--use-ref-as-ean');
     document.getElementById('chk_mpn').checked = commandStr.includes('--use-mpn-as-ean');
     document.getElementById('chk_title').checked = commandStr.includes('--search-value-expression {%Title}');
 
+    // 7. Modos de confirmación
     const confFieldMatch = commandStr.match(/--confirmation-field\s+(\w+)/);
     if (confFieldMatch) {
         const rBtn = document.querySelector(`input[name="conf_field_type"][value="${confFieldMatch[1]}"]`);
@@ -129,12 +138,14 @@ function analyzeAndParsePastedCommand(commandStr) {
         document.getElementById('conf_regex').value = cleanConfRegex;
     }
 
+    // 8. Test Value
     const testValMatch = commandStr.match(/--test-value\s+(\d+)/);
     if (testValMatch) document.getElementById('test_value').value = testValMatch[1];
 
     importLocked = false;
     toggleRegexInput();
 
+    // CRUCE INTELIGENTE: Verificar si estos IDs ya están registrados en la Base de Datos
     if (extractedClient && extractedRival) {
         const match = cachedTeamCommands.find(c => c.client_id == extractedClient && c.rival_id == extractedRival);
         if (match) {
@@ -160,6 +171,7 @@ function generateCommand(mode) {
     
     if (getVal('proxy')) cmd += ` "${getVal('proxy')}"`;
     
+    // Inyección de parámetros GET dinámicos a la URL de búsqueda
     if (getVal('search_url')) {
         let baseUrl = getVal('search_url');
         const clientId = getVal('client_store_id');
@@ -239,29 +251,27 @@ function copyCommand(mode) {
     }
 }
 
+// PERSISTENCIA EN SUPABASE (Estructura Multi-Comando Optimizada)
 async function saveCommandToSupabase() {
     const editingId = document.getElementById('editing_command_id').value;
     const clientId = getVal('client_store_id');
     const rivalId = getVal('rival_store_id');
-    const commandText = generateCommand('launcher');
 
     if (!clientId || !rivalId) {
         alert('Please enter both Client StoreID and Rival StoreID.');
-        return;
-    }
-    if (!commandText) {
-        alert('Cannot save an empty command configuration.');
         return;
     }
 
     const payload = { 
         client_id: clientId, 
         rival_id: rivalId, 
-        command_text: commandText,
+        command_test: generateCommand('test'),       // Guarda la variante de prueba
+        command_launcher: generateCommand('launcher'), // Guarda la variante de lanzamiento masivo
         updated_at: new Date().toISOString()
     };
 
     if (editingId) {
+        // Modo Edición
         const { error } = await supabaseClient
             .from('biter_commands')
             .update(payload)
@@ -275,6 +285,7 @@ async function saveCommandToSupabase() {
             await loadCommandsFromSupabase();
         }
     } else {
+        // Modo Creación (Evitar duplicidad en caché)
         const duplicate = cachedTeamCommands.find(c => c.client_id == clientId && c.rival_id == rivalId);
         if (duplicate) {
             if (confirm(`A configuration for Client ${clientId} and Rival ${rivalId} already exists. Do you want to overwrite it instead?`)) {
@@ -309,7 +320,7 @@ async function loadCommandsFromSupabase() {
         return;
     }
 
-    cachedTeamCommands = data;
+    cachedTeamCommands = data; 
     renderHistoryList(cachedTeamCommands);
 }
 
@@ -332,12 +343,13 @@ function renderHistoryList(commands) {
         const itemLabel = `Client: ${item.client_id} ➜ Rival: ${item.rival_id}`;
         const dateLabel = updatedDate && updatedDate !== createdDate ? `Edited: ${updatedDate}` : `Created: ${createdDate}`;
 
+        // El botón invoca la carga leyendo directamente la nueva columna command_launcher
         div.innerHTML = `
             <div class="history-meta" style="display: flex; flex-direction: column; gap: 2px;">
                 <span class="history-title" style="font-family: monospace; font-size: 11px;">${itemLabel}</span>
                 <span style="font-size: 9px; color: #89b4fa;">${dateLabel}</span>
             </div>
-            <button class="history-edit-btn" onclick="triggerLoadFromSidebar('${item.id}', \`${encodeURIComponent(item.command_text)}\`, '${item.client_id}', '${item.rival_id}')">✏️ Load</button>
+            <button class="history-edit-btn" onclick="triggerLoadFromSidebar('${item.id}', \`${encodeURIComponent(item.command_launcher)}\`, '${item.client_id}', '${item.rival_id}')">✏️ Load</button>
         `;
         listContainer.appendChild(div);
     });
@@ -370,6 +382,7 @@ function clearEditingState() {
     document.getElementById('btn-cloud-cancel').classList.add('hidden');
 }
 
+// FILTRO EN TIEMPO REAL DESDE LA BARRA LATERAL
 document.getElementById('search-history').addEventListener('input', function() {
     const query = this.value.trim().toLowerCase();
     if (!query) {
@@ -383,6 +396,7 @@ document.getElementById('search-history').addEventListener('input', function() {
     renderHistoryList(filtered);
 });
 
+// LISTENERS INTERNOS
 document.getElementById('output').addEventListener('input', function() {
     analyzeAndParsePastedCommand(this.value);
 });
