@@ -1,7 +1,7 @@
-// Inicialización de Supabase (Completa con tus datos reales)
+// Inicialización de Supabase (Con identificador único corregido)
 const SUPABASE_URL = "https://iztkmcrtfmzlzavguuvl.supabase.co"; 
 const SUPABASE_ANON_KEY = "sb_publishable_l2E5C5qCL-HnzuVGeTiidg_wGEN8glj";
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const BASE_PHP = "sudo php /home/netrivals/bin/console";
 const FIXED_METHOD = "curl-impersonate";
@@ -277,7 +277,7 @@ async function saveCommandToSupabase() {
 
     if (editingId) {
         // Modo Edición
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('biter_commands')
             .update(payload)
             .eq('id', editingId);
@@ -301,7 +301,7 @@ async function saveCommandToSupabase() {
             return;
         }
 
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('biter_commands')
             .insert([payload]);
 
@@ -315,7 +315,7 @@ async function saveCommandToSupabase() {
 }
 
 async function loadCommandsFromSupabase() {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .from('biter_commands')
         .select('*')
         .order('updated_at', { ascending: false });
