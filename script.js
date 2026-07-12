@@ -171,21 +171,9 @@ function generateCommand(mode) {
     
     if (getVal('proxy')) cmd += ` "${getVal('proxy')}"`;
     
-    // Inyección de parámetros GET dinámicos a la URL de búsqueda
+    // URL modificada: Agrega la URL tal cual la escribes, sin parámetros adicionales automáticos
     if (getVal('search_url')) {
-        let baseUrl = getVal('search_url');
-        const clientId = getVal('client_store_id');
-        const rivalId = getVal('rival_store_id');
-
-        const separator = baseUrl.includes('?') ? '&' : '?';
-        let queryParams = '';
-        if (clientId) queryParams += `client_id=${clientId}`;
-        if (rivalId) queryParams += `${queryParams ? '&' : ''}rival_id=${rivalId}`;
-
-        if (queryParams) {
-            baseUrl += separator + queryParams;
-        }
-        cmd += ` "${baseUrl}"`;
+        cmd += ` "${getVal('search_url')}"`;
     }
     
     if (getVal('main_regex')) {
@@ -228,26 +216,6 @@ function generateCommand(mode) {
 function updateRealTimeView() {
     if (!importLocked) {
         document.getElementById('output').value = generateCommand('test');
-    }
-}
-
-function copyCommand(mode) {
-    const finalCommand = generateCommand(mode);
-    if (!finalCommand) {
-        alert('Please fill out the form before copying.');
-        return;
-    }
-    const out = document.getElementById('output');
-    out.value = finalCommand;
-    out.select();
-    document.execCommand('copy');
-    
-    setTimeout(updateRealTimeView, 1500);
-
-    if(mode === 'test') {
-        alert(`TEST command (0 1) copied to clipboard! 🧪`);
-    } else {
-        alert(`LAUNCHER command (10 Threads) copied to clipboard! 🚀`);
     }
 }
 
@@ -343,7 +311,6 @@ function renderHistoryList(commands) {
         const itemLabel = `Client: ${item.client_id} ➜ Rival: ${item.rival_id}`;
         const dateLabel = updatedDate && updatedDate !== createdDate ? `Edited: ${updatedDate}` : `Created: ${createdDate}`;
 
-        // El botón invoca la carga leyendo directamente la nueva columna command_launcher
         div.innerHTML = `
             <div class="history-meta" style="display: flex; flex-direction: column; gap: 2px;">
                 <span class="history-title" style="font-family: monospace; font-size: 11px;">${itemLabel}</span>
@@ -380,6 +347,26 @@ function clearEditingState() {
     saveBtn.innerText = '☁️ Save Current Configuration as New';
     saveBtn.style.backgroundColor = '#a6e3a1';
     document.getElementById('btn-cloud-cancel').classList.add('hidden');
+}
+
+function copyCommand(mode) {
+    const finalCommand = generateCommand(mode);
+    if (!finalCommand) {
+        alert('Please fill out the form before copying.');
+        return;
+    }
+    const out = document.getElementById('output');
+    out.value = finalCommand;
+    out.select();
+    document.execCommand('copy');
+    
+    setTimeout(updateRealTimeView, 1500);
+
+    if(mode === 'test') {
+        alert(`TEST command (0 1) copied to clipboard! 🧪`);
+    } else {
+        alert(`LAUNCHER command (10 Threads) copied to clipboard! 🚀`);
+    }
 }
 
 // FILTRO EN TIEMPO REAL DESDE LA BARRA LATERAL
