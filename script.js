@@ -6,7 +6,7 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const BASE_PHP = "sudo php /home/netrivals/bin/console";
 const FIXED_METHOD = "curl-impersonate";
 let importLocked = false;
-let cachedTeamCommands = []; // Guarda en memoria local los datos de la nube para búsquedas flash
+let cachedTeamCommands = []; 
 
 function getVal(id) {
     const el = document.getElementById(id);
@@ -80,7 +80,7 @@ function analyzeAndParsePastedCommand(commandStr) {
         }
     }
 
-    // 3. Search URL (Limpia parámetros dinámicos previos si existen)
+    // 3. Search URL
     const urlMatch = commandStr.match(/"curl-impersonate"\s+"[^"]+"\s+"([^"]+)"/);
     if (urlMatch) {
         let cleanUrl = urlMatch[1];
@@ -88,7 +88,7 @@ function analyzeAndParsePastedCommand(commandStr) {
         document.getElementById('search_url').value = cleanUrl;
     }
 
-    // 4. Main Regex
+    // 4. Main Regex (Limpia modificadores, fin de línea $ y las almohadillas # al importar)
     const regexMatch = commandStr.match(/"curl-impersonate"\s+"[^"]+"\s+"[^"]+"\s+'([^']+)'/);
     if (regexMatch) {
         let cleanRegex = regexMatch[1];
@@ -98,6 +98,10 @@ function analyzeAndParsePastedCommand(commandStr) {
         } else {
             document.getElementById('chk_regex_si').checked = false;
         }
+        // Quita el '$' si existiera al final, y remueve las almohadillas externas '#'
+        if (cleanRegex.endsWith('$')) cleanRegex = cleanRegex.slice(0, -1);
+        if (cleanRegex.startsWith('#') && cleanRegex.endsWith('#')) cleanRegex = cleanRegex.slice(1, -1);
+        
         document.getElementById('main_regex').value = cleanRegex;
     }
 
@@ -126,6 +130,7 @@ function analyzeAndParsePastedCommand(commandStr) {
         document.querySelector('input[name="conf_field_type"][value="NONE"]').checked = true;
     }
 
+    // Confirmation Regex (Limpia modificadores, fin de línea $ y las almohadillas # al importar)
     const confRegexMatch = commandStr.match(/--confirmation-regex\s+'([^']+)'/);
     if (confRegexMatch) {
         let cleanConfRegex = confRegexMatch[1];
@@ -135,6 +140,10 @@ function analyzeAndParsePastedCommand(commandStr) {
         } else {
             document.getElementById('chk_conf_regex_si').checked = false;
         }
+        // Quita el '$' si existiera al final, y remueve las almohadillas externas '#'
+        if (cleanConfRegex.endsWith('$')) cleanConfRegex = cleanConfRegex.slice(0, -1);
+        if (cleanConfRegex.startsWith('#') && cleanConfRegex.endsWith('#')) cleanConfRegex = cleanConfRegex.slice(1, -1);
+        
         document.getElementById('conf_regex').value = cleanConfRegex;
     }
 
@@ -145,7 +154,6 @@ function analyzeAndParsePastedCommand(commandStr) {
     importLocked = false;
     toggleRegexInput();
 
-    // CRUCE INTELIGENTE: Verificar si estos IDs ya están registrados en la Base de Datos
     if (extractedClient && extractedRival) {
         const match = cachedTeamCommands.find(c => c.client_id == extractedClient && c.rival_id == extractedRival);
         if (match) {
@@ -159,7 +167,7 @@ function analyzeAndParsePastedCommand(commandStr) {
 function generateCommand(mode) {
     if (importLocked) return document.getElementById('output').value;
 
-    if (!getVal('client_store_id') && !getVal('rival_store_id') && !getVal('search_url') && getVal('main_regex') === '#url:"([^"]+)"#') {
+    if (!getVal('client_store_id') && !getVal('rival_store_id') && !getVal('search_url') && getVal('main_regex') === 'url:"([^"]+)"') {
         return '';
     }
 
@@ -171,13 +179,13 @@ function generateCommand(mode) {
     
     if (getVal('proxy')) cmd += ` "${getVal('proxy')}"`;
     
-    // URL modificada: Agrega la URL tal cual la escribes, sin parámetros adicionales automáticos
     if (getVal('search_url')) {
         cmd += ` "${getVal('search_url')}"`;
     }
     
+    // Inyección automática de caracteres "#" en la Regex Principal sin el "$"
     if (getVal('main_regex')) {
-        let regexText = getVal('main_regex');
+        let regexText = `#${getVal('main_regex')}#`;
         if (checkActive('chk_regex_si')) regexText += 'si';
         cmd += ` '${regexText}'`;
     }
@@ -197,8 +205,9 @@ function generateCommand(mode) {
     if (confirmationType !== 'NONE') {
         cmd += ` --confirmation-field ${confirmationType}`;
         
+        // Inyección automática de caracteres "#" en la Confirmation Regex sin el "$"
         if (getVal('conf_regex')) {
-            let confRegexText = getVal('conf_regex');
+            let confRegexText = `#${getVal('conf_regex')}#`;
             if (checkActive('chk_conf_regex_si')) confRegexText += 'si';
             cmd += ` --confirmation-regex '${confRegexText}'`;
         }
@@ -219,7 +228,7 @@ function updateRealTimeView() {
     }
 }
 
-// PERSISTENCIA EN SUPABASE (Estructura Multi-Comando Optimizada)
+// PERSISTENCIA EN SUPABASE
 async function saveCommandToSupabase() {
     const editingId = document.getElementById('editing_command_id').value;
     const clientId = getVal('client_store_id');
@@ -233,13 +242,12 @@ async function saveCommandToSupabase() {
     const payload = { 
         client_id: clientId, 
         rival_id: rivalId, 
-        command_test: generateCommand('test'),       // Guarda la variante de prueba
-        command_launcher: generateCommand('launcher'), // Guarda la variante de lanzamiento masivo
+        command_test: generateCommand('test'),       
+        command_launcher: generateCommand('launcher'), 
         updated_at: new Date().toISOString()
     };
 
     if (editingId) {
-        // Modo Edición
         const { error } = await supabaseClient
             .from('biter_commands')
             .update(payload)
@@ -253,7 +261,6 @@ async function saveCommandToSupabase() {
             await loadCommandsFromSupabase();
         }
     } else {
-        // Modo Creación (Evitar duplicidad en caché)
         const duplicate = cachedTeamCommands.find(c => c.client_id == clientId && c.rival_id == rivalId);
         if (duplicate) {
             if (confirm(`A configuration for Client ${clientId} and Rival ${rivalId} already exists. Do you want to overwrite it instead?`)) {

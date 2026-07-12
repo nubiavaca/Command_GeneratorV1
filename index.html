@@ -46,7 +46,7 @@
                 <div class="form-group full-width regex-row">
                     <div style="flex-grow: 1;">
                         <label>Main Extraction Regex</label>
-                        <input type="text" id="main_regex" value='#url:"([^"]+)"#'>
+                        <input type="text" id="main_regex" value='url:"([^"]+)"'>
                     </div>
                     <label class="checkbox-container inline-check-wrapper" title="line break modifier">
                         <input type="checkbox" id="chk_regex_si">
@@ -70,7 +70,7 @@
                 <div class="form-group full-width url-row">
                     <div style="flex-grow: 1;">
                         <label>URL Reconstruction Expression **Optional</label>
-                        <input type="text" id="url_build" value="" placeholder="E.g., https://www.ebay.de/itm/{%s1}">
+                        <input type="text" id="url_build" value="" placeholder="E.g., https://www.url.com/itm/{%s1}">
                     </div>
                     <button type="button" class="btn inline-btn" onclick="injectPlaceholderToUrlBuild()" title="Insert {%s1} at cursor position">{%s1}</button>
                 </div>
@@ -100,7 +100,7 @@
                 <div class="form-group full-width regex-row" id="wrapper-conf-regex">
                     <div style="flex-grow: 1;">
                         <label>Confirmation Regex</label>
-                        <input type="text" id="conf_regex" value='#"gtin12":.*?"([^"]+)"#$'>
+                        <input type="text" id="conf_regex" value='"gtin12":.*?"([^"]+)"'>
                     </div>
                     <label class="checkbox-container inline-check-wrapper" title="line break modifier">
                         <input type="checkbox" id="chk_conf_regex_si">
