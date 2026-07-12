@@ -60,3 +60,20 @@ textarea.code-output { font-family: 'Fira Code', 'Courier New', monospace; heigh
 .history-edit-btn { background: #45475a; border: 1px solid var(--border-color); color: var(--link-color); font-size: 11px; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: bold; }
 .history-edit-btn:hover { background: var(--link-color); color: #11111b; }
 .history-item-placeholder { font-size: 12px; color: #a6adc8; text-align: center; padding: 10px 0; }
+
+/* --- CONTENEDOR EN LÍNEA PARA LOS BOTONES DE LA NUBE --- */
+.cloud-buttons-inline {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+
+.cloud-buttons-inline .btn {
+    flex: 1 1 0%;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.cloud-buttons-inline #btn-cloud-cancel.hidden {
+    display: none !important;
+}

@@ -149,20 +149,23 @@
             
             <input type="hidden" id="editing_command_id" value="">
 
-            <div class="cloud-save-box" style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
-                <button id="btn-cloud-save" class="btn" style="background-color: #a6e3a1; height: 38px; font-size: 14px; font-weight: bold; width: 100%;" onclick="saveCommandToSupabase()">
-                    ☁️ Save Current Configuration as New
-                </button>
-                <button id="btn-cloud-cancel" class="btn hidden" style="background-color: #f38ba8; height: 28px; font-size: 12px; font-weight: bold; width: 100%; color: #11111b;" onclick="clearEditingState()">
-                    ❌ Cancel Editing Mode
-                </button>
+            <!-- Caja de Persistencia Nube Inteligente con Maquetación en Línea -->
+            <div class="cloud-save-box" style="margin-top: 12px;">
+                <div class="cloud-buttons-inline">
+                    <button id="btn-cloud-save" class="btn" style="background-color: #a6e3a1; height: 38px; font-size: 14px; font-weight: bold;" onclick="saveCommandToSupabase()">
+                        ☁️ Save Current Configuration as New
+                    </button>
+                    <button id="btn-cloud-cancel" class="btn hidden" style="background-color: #f38ba8; height: 38px; font-size: 14px; font-weight: bold; color: #11111b;" onclick="clearEditingState()">
+                        ❌ Cancel
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- COLUMNA DERECHA: Barra lateral del historial del equipo -->
     <div class="sidebar">
-        <h3>☁️ Team Saved Configs</h3>
+        <h3>☁️ Saved Configs</h3>
         <input type="text" id="search-history" placeholder="🔍 Filter by Client or Rival ID..." style="margin-bottom: 12px; font-size: 12px; padding: 5px 8px;">
         <div id="history-list" class="history-list">
             <div class="history-item-placeholder">Loading team commands...</div>
