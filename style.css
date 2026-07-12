@@ -9,8 +9,12 @@
     --green: #a6e3a1;
     --orange: #fab387;
 }
-body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 10px; display: flex; justify-content: center; }
-.container { max-width: 850px; width: 100%; background: var(--card-bg); padding: 15px 25px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
+body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; display: flex; justify-content: center; }
+
+/* Distribución en dos columnas */
+.app-layout { display: grid; grid-template-columns: 1fr 300px; gap: 20px; max-width: 1200px; width: 100%; }
+
+.container { background: var(--card-bg); padding: 15px 25px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
 h1 { color: var(--link-color); margin-top: 0; font-size: 20px; border-bottom: 2px solid var(--border-color); padding-bottom: 4px; margin-bottom: 10px; }
 h3 { color: var(--accent-color); margin-bottom: 6px; margin-top: 5px; font-size: 14px; }
 .form-card { background: rgba(0,0,0,0.1); padding: 10px 15px; border-radius: 8px; border: 1px dashed var(--border-color); }
@@ -33,7 +37,6 @@ input:focus, select:focus, textarea:focus { border-color: var(--link-color); out
 .radio-text, .checkbox-text { font-size: 13px; font-weight: 600; color: #cdd6f4; }
 
 .checkbox-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: var(--input-bg); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color); margin-top: 2px; }
-
 .inline-check-wrapper { background: var(--input-bg); border: 1px solid var(--border-color); padding: 0 12px; border-radius: 6px; height: 31px; box-sizing: border-box; display: flex; align-items: center; }
 
 textarea.code-output { font-family: 'Fira Code', 'Courier New', monospace; height: 80px; background: #11111b; color: var(--green); resize: vertical; padding: 10px; font-size: 12px; line-height: 1.4; width: 100%; box-sizing: border-box; }
@@ -48,3 +51,12 @@ textarea.code-output { font-family: 'Fira Code', 'Courier New', monospace; heigh
 .inline-btn:hover { background: #585b70; color: #fff; }
 
 .hidden { display: none !important; }
+
+/* Estilos de la barra lateral (Historial Nube) */
+.sidebar { background: var(--card-bg); border-radius: 12px; padding: 15px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); border-left: 1px solid var(--border-color); max-height: 90vh; overflow-y: auto; }
+.history-list { display: flex; flex-direction: column; gap: 8px; margin-top: 5px; }
+.history-item { background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); padding: 8px 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.history-title { font-size: 12px; font-weight: bold; color: var(--text-color); word-break: break-word; }
+.history-edit-btn { background: #45475a; border: 1px solid var(--border-color); color: var(--link-color); font-size: 11px; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+.history-edit-btn:hover { background: var(--link-color); color: #11111b; }
+.history-item-placeholder { font-size: 12px; color: #a6adc8; text-align: center; padding: 10px 0; }

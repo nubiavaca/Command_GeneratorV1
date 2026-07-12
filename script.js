@@ -1,6 +1,12 @@
+// Inicialización de Supabase (Completa con tus datos reales)
+const SUPABASE_URL = "https://iztkmcrtfmzlzavguuvl.supabase.co"; 
+const SUPABASE_ANON_KEY = "sb_publishable_l2E5C5qCL-HnzuVGeTiidg_wGEN8glj";
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 const BASE_PHP = "sudo php /home/netrivals/bin/console";
 const FIXED_METHOD = "curl-impersonate";
 let importLocked = false;
+let cachedTeamCommands = []; // Guarda en memoria local los datos de la nube para búsquedas flash
 
 function getVal(id) {
     const el = document.getElementById(id);
@@ -23,7 +29,7 @@ function toggleRegexInput() {
     
     if (confirmationType !== 'NONE') {
         wrapper.classList.remove('hidden');
-        wrapper.style.display = 'grid'; // Maintain CSS inline grid structure
+        wrapper.style.display = 'grid';
     } else {
         wrapper.classList.add('hidden');
         wrapper.style.display = 'none';
@@ -48,7 +54,7 @@ function injectPlaceholderToUrl() { insertAtCursor(document.getElementById('sear
 function injectPlaceholderToPost() { insertAtCursor(document.getElementById('post_payload'), '%s'); }
 function injectPlaceholderToUrlBuild() { insertAtCursor(document.getElementById('url_build'), '{%s1}'); }
 
-// PARSER: Breaks down old commands pasted in the output textarea
+// PARSER: Procesa comandos pegados manualmente e identifica inteligentemente cruces con la BD
 function analyzeAndParsePastedCommand(commandStr) {
     if (!commandStr.includes("php /home/netrivals/bin/console")) return;
     
@@ -56,9 +62,13 @@ function analyzeAndParsePastedCommand(commandStr) {
 
     // 1. Store IDs
     const storeMatches = commandStr.match(/(?:ean-biter-by-store-id(?:-launcher)?)\s+(\d+)\s+(\d+)/);
+    let extractedClient = '';
+    let extractedRival = '';
     if (storeMatches) {
-        document.getElementById('client_store_id').value = storeMatches[1];
-        document.getElementById('rival_store_id').value = storeMatches[2];
+        extractedClient = storeMatches[1];
+        extractedRival = storeMatches[2];
+        document.getElementById('client_store_id').value = extractedClient;
+        document.getElementById('rival_store_id').value = extractedRival;
     }
 
     // 2. Proxy
@@ -70,11 +80,16 @@ function analyzeAndParsePastedCommand(commandStr) {
         }
     }
 
-    // 3. Search URL
+    // 3. Search URL (Limpia parámetros dinámicos previos si existen)
     const urlMatch = commandStr.match(/"curl-impersonate"\s+"[^"]+"\s+"([^"]+)"/);
-    if (urlMatch) document.getElementById('search_url').value = urlMatch[1];
+    if (urlMatch) {
+        let cleanUrl = urlMatch[1];
+        // Remover inserciones previas automáticas de client_id y rival_id para no duplicar en el re-render
+        cleanUrl = cleanUrl.replace(/[\?&]client_id=\d+/, '').replace(/&rival_id=\d+/, '').replace(/\?rival_id=\d+/, '');
+        document.getElementById('search_url').value = cleanUrl;
+    }
 
-    // 4. Main Regex and its 'si' Flag evaluation
+    // 4. Main Regex
     const regexMatch = commandStr.match(/"curl-impersonate"\s+"[^"]+"\s+"[^"]+"\s+'([^']+)'/);
     if (regexMatch) {
         let cleanRegex = regexMatch[1];
@@ -87,7 +102,7 @@ function analyzeAndParsePastedCommand(commandStr) {
         document.getElementById('main_regex').value = cleanRegex;
     }
 
-    // 5. Optional explicit parameters
+    // 5. Parámetros explícitos
     const postMatch = commandStr.match(/--post\s+'([^']+)'/);
     document.getElementById('post_payload').value = postMatch ? postMatch[1] : '';
 
@@ -97,13 +112,13 @@ function analyzeAndParsePastedCommand(commandStr) {
     const headersMatch = commandStr.match(/--get-content-method-options\s+'([^']+)'/);
     document.getElementById('method_options').value = headersMatch ? headersMatch[1] : '';
 
-    // 6. Additional checkboxes
+    // 6. Checkboxes avanzados
     document.getElementById('chk_suggest').checked = commandStr.includes("--connection-type 'to_suggest'");
     document.getElementById('chk_ref').checked = commandStr.includes('--use-ref-as-ean');
     document.getElementById('chk_mpn').checked = commandStr.includes('--use-mpn-as-ean');
     document.getElementById('chk_title').checked = commandStr.includes('--search-value-expression {%Title}');
 
-    // 7. Confirmation fields and its 'si' flag injection
+    // 7. Modos de confirmación
     const confFieldMatch = commandStr.match(/--confirmation-field\s+(\w+)/);
     if (confFieldMatch) {
         const rBtn = document.querySelector(`input[name="conf_field_type"][value="${confFieldMatch[1]}"]`);
@@ -130,6 +145,16 @@ function analyzeAndParsePastedCommand(commandStr) {
 
     importLocked = false;
     toggleRegexInput();
+
+    // CRUCE INTELIGENTE: Verificar si estos IDs ya están registrados en la Base de Datos
+    if (extractedClient && extractedRival) {
+        const match = cachedTeamCommands.find(c => c.client_id == extractedClient && c.rival_id == extractedRival);
+        if (match) {
+            setEditingState(match.id, extractedClient, extractedRival);
+        } else {
+            clearEditingState();
+        }
+    }
 }
 
 function generateCommand(mode) {
@@ -146,7 +171,23 @@ function generateCommand(mode) {
     cmd += ` "${FIXED_METHOD}"`;
     
     if (getVal('proxy')) cmd += ` "${getVal('proxy')}"`;
-    if (getVal('search_url')) cmd += ` "${getVal('search_url')}"`;
+    
+    // Inyección de parámetros GET dinámicos a la URL de búsqueda
+    if (getVal('search_url')) {
+        let baseUrl = getVal('search_url');
+        const clientId = getVal('client_store_id');
+        const rivalId = getVal('rival_store_id');
+
+        const separator = baseUrl.includes('?') ? '&' : '?';
+        let queryParams = '';
+        if (clientId) queryParams += `client_id=${clientId}`;
+        if (rivalId) queryParams += `${queryParams ? '&' : ''}rival_id=${rivalId}`;
+
+        if (queryParams) {
+            baseUrl += separator + queryParams;
+        }
+        cmd += ` "${baseUrl}"`;
+    }
     
     if (getVal('main_regex')) {
         let regexText = getVal('main_regex');
@@ -211,6 +252,156 @@ function copyCommand(mode) {
     }
 }
 
+// PERSISTENCIA EN SUPABASE
+async function saveCommandToSupabase() {
+    const editingId = document.getElementById('editing_command_id').value;
+    const clientId = getVal('client_store_id');
+    const rivalId = getVal('rival_store_id');
+    const commandText = generateCommand('launcher');
+
+    if (!clientId || !rivalId) {
+        alert('Please enter both Client StoreID and Rival StoreID.');
+        return;
+    }
+    if (!commandText) {
+        alert('Cannot save an empty command configuration.');
+        return;
+    }
+
+    const payload = { 
+        client_id: clientId, 
+        rival_id: rivalId, 
+        command_text: commandText,
+        updated_at: new Date().toISOString()
+    };
+
+    if (editingId) {
+        // Modo Edición
+        const { error } = await supabase
+            .from('biter_commands')
+            .update(payload)
+            .eq('id', editingId);
+
+        if (error) {
+            alert('Error updating configuration: ' + error.message);
+        } else {
+            alert(`Configuration for Client ${clientId} updated successfully! 📝☁️`);
+            clearEditingState();
+            await loadCommandsFromSupabase();
+        }
+    } else {
+        // Modo Creación (Garantizar un único biter oficial por cruce de tiendas)
+        const duplicate = cachedTeamCommands.find(c => c.client_id == clientId && c.rival_id == rivalId);
+        if (duplicate) {
+            if (confirm(`A configuration for Client ${clientId} and Rival ${rivalId} already exists. Do you want to overwrite it instead?`)) {
+                setEditingState(duplicate.id, clientId, rivalId);
+                saveCommandToSupabase();
+                return;
+            }
+            return;
+        }
+
+        const { error } = await supabase
+            .from('biter_commands')
+            .insert([payload]);
+
+        if (error) {
+            alert('Error saving configuration: ' + error.message);
+        } else {
+            alert(`New configuration for Client ${clientId} saved! 🚀☁️`);
+            await loadCommandsFromSupabase();
+        }
+    }
+}
+
+async function loadCommandsFromSupabase() {
+    const { data, error } = await supabase
+        .from('biter_commands')
+        .select('*')
+        .order('updated_at', { ascending: false });
+
+    if (error) {
+        document.getElementById('history-list').innerHTML = `<div style="color: #f38ba8;">Error: ${error.message}</div>`;
+        return;
+    }
+
+    cachedTeamCommands = data; // Guardamos en caché local para búsquedas e identificaciones
+    renderHistoryList(cachedTeamCommands);
+}
+
+function renderHistoryList(commands) {
+    const listContainer = document.getElementById('history-list');
+    if (commands.length === 0) {
+        listContainer.innerHTML = `<div style="color: #a6adc8; font-size:12px;">No matches found.</div>`;
+        return;
+    }
+
+    listContainer.innerHTML = '';
+    commands.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'history-item';
+        
+        const options = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+        const createdDate = new Date(item.created_at).toLocaleDateString('es-ES', options);
+        const updatedDate = item.updated_at ? new Date(item.updated_at).toLocaleDateString('es-ES', options) : null;
+
+        const itemLabel = `Client: ${item.client_id} ➜ Rival: ${item.rival_id}`;
+        const dateLabel = updatedDate && updatedDate !== createdDate ? `Edited: ${updatedDate}` : `Created: ${createdDate}`;
+
+        div.innerHTML = `
+            <div class="history-meta" style="display: flex; flex-direction: column; gap: 2px;">
+                <span class="history-title" style="font-family: monospace; font-size: 11px;">${itemLabel}</span>
+                <span style="font-size: 9px; color: #89b4fa;">${dateLabel}</span>
+            </div>
+            <button class="history-edit-btn" onclick="triggerLoadFromSidebar('${item.id}', \`${encodeURIComponent(item.command_text)}\`, '${item.client_id}', '${item.rival_id}')">✏️ Load</button>
+        `;
+        listContainer.appendChild(div);
+    });
+}
+
+function triggerLoadFromSidebar(id, encodedCommand, clientId, rivalId) {
+    const decodedCommand = decodeURIComponent(encodedCommand);
+    document.getElementById('output').value = decodedCommand;
+    analyzeAndParsePastedCommand(decodedCommand);
+    
+    // Forzado manual preventivo tras procesamiento del parser
+    document.getElementById('client_store_id').value = clientId;
+    document.getElementById('rival_store_id').value = rivalId;
+    
+    setEditingState(id, clientId, rivalId);
+}
+
+function setEditingState(id, clientId, rivalId) {
+    document.getElementById('editing_command_id').value = id;
+    const saveBtn = document.getElementById('btn-cloud-save');
+    saveBtn.innerText = `💾 Update Client ${clientId} vs ${rivalId} Config`;
+    saveBtn.style.backgroundColor = '#89b4fa';
+    document.getElementById('btn-cloud-cancel').classList.remove('hidden');
+}
+
+function clearEditingState() {
+    document.getElementById('editing_command_id').value = '';
+    const saveBtn = document.getElementById('btn-cloud-save');
+    saveBtn.innerText = '☁️ Save Current Configuration as New';
+    saveBtn.style.backgroundColor = '#a6e3a1';
+    document.getElementById('btn-cloud-cancel').classList.add('hidden');
+}
+
+// FILTRO EN TIEMPO REAL DESDE LA BARRA LATERAL
+document.getElementById('search-history').addEventListener('input', function() {
+    const query = this.value.trim().toLowerCase();
+    if (!query) {
+        renderHistoryList(cachedTeamCommands);
+        return;
+    }
+    const filtered = cachedTeamCommands.filter(c => 
+        c.client_id.toString().toLowerCase().includes(query) || 
+        c.rival_id.toString().toLowerCase().includes(query)
+    );
+    renderHistoryList(filtered);
+});
+
+// LISTENERS ORIGINALES E INTERNOS
 document.getElementById('output').addEventListener('input', function() {
     analyzeAndParsePastedCommand(this.value);
 });
@@ -219,8 +410,15 @@ document.getElementById('output').addEventListener('input', function() {
     const el = document.getElementById(id);
     if(el) {
         el.addEventListener('input', function() {
-            this.value = this.value.replace(/\D/g, ''); 
+            this.value = this.value.replace(/\D/g, '');
             updateRealTimeView();
+            
+            // Si el usuario borra o cambia manualmente los IDs, evaluar si coincide con algo existente
+            const cId = getVal('client_store_id');
+            const rId = getVal('rival_store_id');
+            const match = cachedTeamCommands.find(c => c.client_id == cId && c.rival_id == rId);
+            if (match) setEditingState(match.id, cId, rId);
+            else clearEditingState();
         });
     }
 });
@@ -242,4 +440,6 @@ document.getElementById('radio-confirmation-group').addEventListener('change', t
 document.getElementById('chk_regex_si').addEventListener('change', updateRealTimeView);
 document.getElementById('chk_conf_regex_si').addEventListener('change', updateRealTimeView);
 
+// Inicialización de la aplicación
 toggleRegexInput();
+loadCommandsFromSupabase();

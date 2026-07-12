@@ -2,152 +2,178 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Biter Command Generator - Netrivals</title>
+    <title>Biter Command Builder - Netrivals</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="container">
-    <h1>🧪 Biter Command Generator - Netrivals</h1>
-    
-    <div class="form-card">
-        <div class="triple-row" style="margin-bottom: 8px;">
-            <div class="form-group">
-                <label>Client StoreID</label>
-                <input type="text" id="client_store_id" value="" pattern="[0-9]*" inputmode="numeric">
+<div class="app-layout">
+    <!-- COLUMNA IZQUIERDA: Formulario Principal -->
+    <div class="container">
+        <h1>🧪 Biter Command Builder - Netrivals</h1>
+        
+        <div class="form-card">
+            <div class="triple-row" style="margin-bottom: 8px;">
+                <div class="form-group">
+                    <label>Client StoreID</label>
+                    <input type="text" id="client_store_id" value="" pattern="[0-9]*" inputmode="numeric">
+                </div>
+                <div class="form-group">
+                    <label>Rival StoreID</label>
+                    <input type="text" id="rival_store_id" value="" pattern="[0-9]*" inputmode="numeric">
+                </div>
+                <div class="form-group">
+                    <label>Proxy</label>
+                    <select id="proxy">
+                        <option value="webshare-10K" selected>Webshare-10K</option>
+                        <option value="all">All</option>
+                        <option value="oxylabs-web-scraper-api">Oxylabs</option>
+                        <option value="scraperapi">Scraperapi</option>
+                    </select>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Rival StoreID</label>
-                <input type="text" id="rival_store_id" value="" pattern="[0-9]*" inputmode="numeric">
-            </div>
-            <div class="form-group">
-                <label>Proxy</label>
-                <select id="proxy">
-                    <option value="webshare-10K" selected>Webshare-10K</option>
-                    <option value="all">All</option>
-                    <option value="oxylabs-web-scraper-api">Oxylabs</option>
-                    <option value="scraperapi">Scraperapi</option>
-                </select>
+
+            <div class="form-row" id="test-form">
+                
+                <div class="form-group full-width url-row">
+                    <div style="flex-grow: 1;">
+                        <label>Search URL</label>
+                        <input type="text" id="search_url" placeholder="https://www.url.com/productsearchautocomplete/search?term=%s">
+                    </div>
+                    <button type="button" class="btn inline-btn" onclick="injectPlaceholderToUrl()" title="Insert %s at cursor position">%s</button>
+                </div>
+                
+                <div class="form-group full-width regex-row">
+                    <div style="flex-grow: 1;">
+                        <label>Main Extraction Regex</label>
+                        <input type="text" id="main_regex" value='#url:"([^"]+)"#'>
+                    </div>
+                    <label class="checkbox-container inline-check-wrapper" title="line break modifier">
+                        <input type="checkbox" id="chk_regex_si">
+                        <span class="checkbox-text">"si"</span>
+                    </label>
+                </div>
+                
+                <div class="form-group full-width url-row">
+                    <div style="flex-grow: 1;">
+                        <label>POST Parameter **Optional</label>
+                        <input type="text" id="post_payload" value="" placeholder="Leave empty if GET. E.g., term=%s">
+                    </div>
+                    <button type="button" class="btn inline-btn" onclick="injectPlaceholderToPost()" title="Insert %s at cursor position">%s</button>
+                </div>
+                
+                <div class="form-group full-width">
+                    <label>Custom Headers | E.g., {"custom_headers": ["Content-Type: text/plain"]} </label>
+                    <textarea id="method_options" style="height: 45px;" placeholder='E.g., {"custom_headers": ["Content-Type: text/plain"]}'></textarea>
+                </div>
+
+                <div class="form-group full-width url-row">
+                    <div style="flex-grow: 1;">
+                        <label>URL Reconstruction Expression **Optional</label>
+                        <input type="text" id="url_build" value="" placeholder="E.g., https://www.ebay.de/itm/{%s1}">
+                    </div>
+                    <button type="button" class="btn inline-btn" onclick="injectPlaceholderToUrlBuild()" title="Insert {%s1} at cursor position">{%s1}</button>
+                </div>
+
+                <div class="form-group full-width">
+                    <label>Confirmation Field</label>
+                    <div class="radio-group" id="radio-confirmation-group">
+                        <label class="radio-container">
+                            <input type="radio" name="conf_field_type" value="EAN" checked>
+                            <span class="radio-text">EAN</span>
+                        </label>
+                        <label class="radio-container">
+                            <input type="radio" name="conf_field_type" value="MPN">
+                            <span class="radio-text">MPN</span>
+                        </label>
+                        <label class="radio-container">
+                            <input type="radio" name="conf_field_type" value="REF">
+                            <span class="radio-text">REF</span>
+                        </label>
+                        <label class="radio-container">
+                            <input type="radio" name="conf_field_type" value="NONE">
+                            <span class="radio-text" style="color: #f38ba8;">None</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group full-width regex-row" id="wrapper-conf-regex">
+                    <div style="flex-grow: 1;">
+                        <label>Confirmation Regex</label>
+                        <input type="text" id="conf_regex" value='#"gtin12":.*?"([^"]+)"#$'>
+                    </div>
+                    <label class="checkbox-container inline-check-wrapper" title="line break modifier">
+                        <input type="checkbox" id="chk_conf_regex_si">
+                        <span class="checkbox-text">"si"</span>
+                    </label>
+                </div>
+
+                <div class="form-group full-width">
+                    <label>Additional Command Options</label>
+                    <div class="checkbox-grid" id="checkbox-advanced-group">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="chk_suggest">
+                            <span class="checkbox-text">Suggest</span>
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="chk_ref">
+                            <span class="checkbox-text">Search by ref</span>
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="chk_mpn">
+                            <span class="checkbox-text">Search by MPN</span>
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="chk_title">
+                            <span class="checkbox-text">Search by title</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group full-width">
+                    <label>Test Value</label>
+                    <input type="text" id="test_value" placeholder="e.g., 00773602572465">
+                </div>
+
             </div>
         </div>
 
-        <div class="form-row" id="test-form">
+        <div style="margin-top: 15px;">
+            <h3>📋 Generated Command / Paste to Edit</h3>
+            <textarea id="output" class="code-output" placeholder="Fill the form to generate a command... Or paste an existing command here to edit its fields."></textarea>
             
-            <div class="form-group full-width url-row">
-                <div style="flex-grow: 1;">
-                    <label>Search URL</label>
-                    <input type="text" id="search_url" placeholder="https://www.url.com/productsearchautocomplete/search?term=%s">
-                </div>
-                <button type="button" class="btn inline-btn" onclick="injectPlaceholderToUrl()" title="Insert %s at cursor position">%s</button>
-            </div>
-            
-            <div class="form-group full-width regex-row">
-                <div style="flex-grow: 1;">
-                    <label>Main Extraction Regex</label>
-                    <input type="text" id="main_regex" value='#url:"([^"]+)"#'>
-                </div>
-                <label class="checkbox-container inline-check-wrapper" title="line break modifier">
-                    <input type="checkbox" id="chk_regex_si">
-                    <span class="checkbox-text">"si"</span>
-                </label>
+            <div class="buttons-container">
+                <button class="btn btn-test" onclick="copyCommand('test')">📋 Copy TEST Command (0 1)</button>
+                <button class="btn btn-launcher" onclick="copyCommand('launcher')">🚀 Copy LAUNCHER Command (10 Threads)</button>
             </div>
             
-            <div class="form-group full-width url-row">
-                <div style="flex-grow: 1;">
-                    <label>POST Parameter **Optional</label>
-                    <input type="text" id="post_payload" value="" placeholder="Leave empty if GET. E.g., term=%s">
-                </div>
-                <button type="button" class="btn inline-btn" onclick="injectPlaceholderToPost()" title="Insert %s at cursor position">%s</button>
-            </div>
-            
-            <div class="form-group full-width">
-                <label>Custom Headers | E.g., {"custom_headers": ["Content-Type: text/plain"]} </label>
-                <textarea id="method_options" style="height: 45px;" placeholder='E.g., {"custom_headers": ["Content-Type: text/plain"]}'></textarea>
-            </div>
+            <!-- Campo oculto para trackear ID en edición -->
+            <input type="hidden" id="editing_command_id" value="">
 
-            <div class="form-group full-width url-row">
-                <div style="flex-grow: 1;">
-                    <label>URL Reconstruction Expression **Optional</label>
-                    <input type="text" id="url_build" value="" placeholder="E.g., https://www.url.com/itm/{%s1}">
-                </div>
-                <button type="button" class="btn inline-btn" onclick="injectPlaceholderToUrlBuild()" title="Insert {%s1} at cursor position">{%s1}</button>
+            <!-- Caja de Persistencia Nube Inteligente -->
+            <div class="cloud-save-box" style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+                <button id="btn-cloud-save" class="btn" style="background-color: #a6e3a1; height: 38px; font-size: 14px; font-weight: bold; width: 100%;" onclick="saveCommandToSupabase()">
+                    ☁️ Save Current Configuration as New
+                </button>
+                <button id="btn-cloud-cancel" class="btn hidden" style="background-color: #f38ba8; height: 28px; font-size: 12px; font-weight: bold; width: 100%; color: #11111b;" onclick="clearEditingState()">
+                    ❌ Cancel Editing Mode
+                </button>
             </div>
-
-            <div class="form-group full-width">
-                <label>Confirmation Field</label>
-                <div class="radio-group" id="radio-confirmation-group">
-                    <label class="radio-container">
-                        <input type="radio" name="conf_field_type" value="EAN" checked>
-                        <span class="radio-text">EAN</span>
-                    </label>
-                    <label class="radio-container">
-                        <input type="radio" name="conf_field_type" value="MPN">
-                        <span class="radio-text">MPN</span>
-                    </label>
-                    <label class="radio-container">
-                        <input type="radio" name="conf_field_type" value="REF">
-                        <span class="radio-text">REF</span>
-                    </label>
-                    <label class="radio-container">
-                        <input type="radio" name="conf_field_type" value="NONE">
-                        <span class="radio-text" style="color: #f38ba8;">None</span>
-                    </label>
-                </div>
-            </div>
-
-            <div class="form-group full-width regex-row" id="wrapper-conf-regex">
-                <div style="flex-grow: 1;">
-                    <label>Confirmation Regex</label>
-                    <input type="text" id="conf_regex" value='#"gtin12":.*?"([^"]+)"#$'>
-                </div>
-                <label class="checkbox-container inline-check-wrapper" title="line break modifier">
-                    <input type="checkbox" id="chk_conf_regex_si">
-                    <span class="checkbox-text">"si"</span>
-                </label>
-            </div>
-
-            <div class="form-group full-width">
-                <label>Additional Command Options</label>
-                <div class="checkbox-grid" id="checkbox-advanced-group">
-                    <label class="checkbox-container">
-                        <input type="checkbox" id="chk_suggest">
-                        <span class="checkbox-text">Suggest</span>
-                    </label>
-                    <label class="checkbox-container">
-                        <input type="checkbox" id="chk_ref">
-                        <span class="checkbox-text">Search by ref</span>
-                    </label>
-                    <label class="checkbox-container">
-                        <input type="checkbox" id="chk_mpn">
-                        <span class="checkbox-text">Search by MPN</span>
-                    </label>
-                    <label class="checkbox-container">
-                        <input type="checkbox" id="chk_title">
-                        <span class="checkbox-text">Search by title</span>
-                    </label>
-                </div>
-            </div>
-
-            <div class="form-group full-width">
-                <label>Test Value</label>
-                <input type="text" id="test_value" placeholder="e.g., 00773602572465">
-            </div>
-
         </div>
     </div>
 
-    <div style="margin-top: 15px;">
-        <h3>📋 Generated Command / Paste to Edit</h3>
-        <textarea id="output" class="code-output" placeholder="Fill the form to generate a command... Or paste an existing command here to edit its fields."></textarea>
-        
-        <div class="buttons-container">
-            <button class="btn btn-test" onclick="copyCommand('test')">📋 Copy TEST Command (0 1)</button>
-            <button class="btn btn-launcher" onclick="copyCommand('launcher')">🚀 Copy LAUNCHER Command (10 Threads)</button>
+    <!-- COLUMNA DERECHA: Barra lateral del historial del equipo -->
+    <div class="sidebar">
+        <h3>☁️ Team Saved Configs</h3>
+        <input type="text" id="search-history" placeholder="🔍 Filter by Client or Rival ID..." style="margin-bottom: 12px; font-size: 12px; padding: 5px 8px;">
+        <div id="history-list" class="history-list">
+            <div class="history-item-placeholder">Loading team commands...</div>
         </div>
-        <span class="note" style="text-align: center; display: block; margin-top: 6px; color: #a6adc8;">Clicking any button will automatically copy the corresponding command to your clipboard.</span>
     </div>
 </div>
 
+<!-- SDK de Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="script.js"></script>
 </body>
 </html>
