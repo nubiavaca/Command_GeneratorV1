@@ -380,17 +380,25 @@ function copyCommand(mode) {
     }
 }
 
-// FILTRO EN TIEMPO REAL DESDE LA BARRA LATERAL
+// FILTRO AVANZADO MULTI-TÉRMINO EN TIEMPO REAL (Admite buscar "ID_Cliente ID_Rival")
 document.getElementById('search-history').addEventListener('input', function() {
     const query = this.value.trim().toLowerCase();
     if (!query) {
         renderHistoryList(cachedTeamCommands);
         return;
     }
-    const filtered = cachedTeamCommands.filter(c => 
-        c.client_id.toString().toLowerCase().includes(query) || 
-        c.rival_id.toString().toLowerCase().includes(query)
-    );
+    
+    // Divide lo que escribe el usuario por espacios (ej: ["123456", "78923"])
+    const terms = query.split(/\s+/);
+    
+    const filtered = cachedTeamCommands.filter(c => {
+        // Verifica que CADA término escrito coincida con el cliente O con el rival
+        return terms.every(term => 
+            c.client_id.toString().toLowerCase().includes(term) || 
+            c.rival_id.toString().toLowerCase().includes(term)
+        );
+    });
+    
     renderHistoryList(filtered);
 });
 
