@@ -8,6 +8,7 @@
     --border-color: #45475a;
     --green: #a6e3a1;
     --orange: #fab387;
+    --red: #f38ba8;
 }
 body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; display: flex; justify-content: center; }
 
@@ -61,25 +62,54 @@ textarea.code-output { font-family: 'Fira Code', 'Courier New', monospace; heigh
 .history-edit-btn:hover { background: var(--link-color); color: #11111b; }
 .history-item-placeholder { font-size: 12px; color: #a6adc8; text-align: center; padding: 10px 0; }
 
-/* --- CONTENEDOR EN LÍNEA OPTIMIZADO PARA LOS BOTONES DE LA NUBE --- */
 .cloud-buttons-inline {
     display: flex !important;
-    flex-direction: row !important; /* Fuerza la alineación horizontal lado a lado */
+    flex-direction: row !important;
     gap: 12px !important;
     width: 100% !important;
     align-items: center !important;
 }
-
-/* Fuerza el reparto equitativo o la expansión al 100% gracias a flex-grow */
 .cloud-buttons-inline .btn {
     flex: 1 1 0% !important; 
-    flex-grow: 1 !important; /* Mágicamente estira el botón verde si está solo */
+    flex-grow: 1 !important; 
     width: auto !important; 
     box-sizing: border-box !important;
     margin: 0 !important; 
 }
-
-/* Control estricto de ocultación para que el de guardar use todo el ancho si no está editando */
 .cloud-buttons-inline #btn-cloud-cancel.hidden {
     display: none !important;
+}
+
+/* === SISTEMA DE ALERTAS TOAST FLOTANTES EN PANTALLA === */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 9999;
+}
+.toast {
+    min-width: 280px;
+    max-width: 380px;
+    padding: 12px 18px;
+    border-radius: 8px;
+    color: #11111b;
+    font-size: 13px;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    animation: slideIn 0.3s ease forward;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.toast.success { background-color: var(--green); }
+.toast.info { background-color: var(--link-color); }
+.toast.error { background-color: var(--red); color: #fff; }
+
+@keyframes slideIn {
+    from { transform: translateX(120%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
 }

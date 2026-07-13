@@ -8,6 +8,27 @@ const FIXED_METHOD = "curl-impersonate";
 let importLocked = false;
 let cachedTeamCommands = []; 
 
+// FUNCIÓN INYECTORA DE ALERTAS EN FORMULARIO (TOASTS)
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerText = message;
+
+    container.appendChild(toast);
+
+    // Desvanecer y remover automáticamente tras 3.5 segundos
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'scale(0.9)';
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    }, 3500);
+}
+
 function getVal(id) {
     const el = document.getElementById(id);
     return el ? el.value.trim() : '';
@@ -232,14 +253,14 @@ function updateRealTimeView() {
     }
 }
 
-// PERSISTENCIA EN SUPABASE
+// PERSISTENCIA EN SUPABASE (Con notificaciones flotantes integradas)
 async function saveCommandToSupabase() {
     const editingId = document.getElementById('editing_command_id').value;
     const clientId = getVal('client_store_id');
     const rivalId = getVal('rival_store_id');
 
     if (!clientId || !rivalId) {
-        alert('Please enter both Client StoreID and Rival StoreID.');
+        showToast('Please enter both Client StoreID and Rival StoreID.', 'error');
         return;
     }
 
@@ -258,9 +279,9 @@ async function saveCommandToSupabase() {
             .eq('id', editingId);
 
         if (error) {
-            alert('Error updating configuration: ' + error.message);
+            showToast('Error updating configuration: ' + error.message, 'error');
         } else {
-            alert(`Configuration for Client ${clientId} updated successfully! 📝☁️`);
+            showToast(`Configuration updated successfully! 📝☁️`, 'info'); // AZUL AL ACTUALIZAR
             clearEditingState();
             await loadCommandsFromSupabase();
         }
@@ -280,9 +301,9 @@ async function saveCommandToSupabase() {
             .insert([payload]);
 
         if (error) {
-            alert('Error saving configuration: ' + error.message);
+            showToast('Error saving configuration: ' + error.message, 'error'); // ROJO SI FALLA
         } else {
-            alert(`New configuration for Client ${clientId} saved! 🚀☁️`);
+            showToast(`New configuration saved to cloud! 🚀☁️`, 'success'); // VERDE AL INGRESAR
             await loadCommandsFromSupabase();
         }
     }
@@ -322,7 +343,6 @@ function renderHistoryList(commands) {
         const itemLabel = `Client: ${item.client_id} ➜ Rival: ${item.rival_id}`;
         const dateLabel = updatedDate && updatedDate !== createdDate ? `Edited: ${updatedDate}` : `Created: ${createdDate}`;
 
-        // Corrección Detalle 1: Ahora pasamos "command_test" en lugar de "command_launcher" para mantener el test_value al cargar
         div.innerHTML = `
             <div class="history-meta" style="display: flex; flex-direction: column; gap: 2px;">
                 <span class="history-title" style="font-family: monospace; font-size: 11px;">${itemLabel}</span>
@@ -370,7 +390,7 @@ function clearEditingState() {
 function copyCommand(mode) {
     const finalCommand = generateCommand(mode);
     if (!finalCommand) {
-        alert('Please fill out the form before copying.');
+        showToast('Please fill out the form before copying.', 'error');
         return;
     }
     const out = document.getElementById('output');
@@ -381,13 +401,13 @@ function copyCommand(mode) {
     setTimeout(updateRealTimeView, 1500);
 
     if(mode === 'test') {
-        alert(`TEST command (0 1) copied to clipboard! 🧪`);
+        showToast(`TEST command copied to clipboard! 🧪`, 'success'); // VERDE AL COPIAR
     } else {
-        alert(`LAUNCHER command (10 Threads) copied to clipboard! 🚀`);
+        showToast(`LAUNCHER command copied to clipboard! 🚀`, 'success'); // VERDE AL COPIAR
     }
 }
 
-// FILTRO AVANZADO MULTI-TÉRMINO BLINDADO (A PRUEBA DE REGISTROS CORRUPTOS O VACÍOS)
+// FILTRO AVANZADO MULTI-TÉRMINO BLINDADO
 document.getElementById('search-history').addEventListener('input', function() {
     const query = this.value.trim().toLowerCase();
     if (!query) {
@@ -429,12 +449,10 @@ document.getElementById('output').addEventListener('input', function() {
             const match = cachedTeamCommands.find(c => c.client_id == cId && c.rival_id == rId);
             
             if (match) {
-                // Corrección Detalle 2: Al escribir un par existente, cargamos el comando guardado en el parser para poblar el formulario
                 setEditingState(match.id, cId, rId);
                 if (match.command_test) {
                     document.getElementById('output').value = match.command_test;
                     analyzeAndParsePastedCommand(match.command_test);
-                    // Re-forzamos los IDs originales para evitar desfases del parser de texto plano
                     document.getElementById('client_store_id').value = cId;
                     document.getElementById('rival_store_id').value = rId;
                 }
