@@ -380,7 +380,7 @@ function copyCommand(mode) {
     }
 }
 
-// FILTRO AVANZADO MULTI-TÉRMINO EN TIEMPO REAL (Admite buscar "ID_Cliente ID_Rival")
+// FILTRO AVANZADO MULTI-TÉRMINO (A PRUEBA DE BALAS - Admite buscar "ID_Cliente ID_Rival")
 document.getElementById('search-history').addEventListener('input', function() {
     const query = this.value.trim().toLowerCase();
     if (!query) {
@@ -388,14 +388,20 @@ document.getElementById('search-history').addEventListener('input', function() {
         return;
     }
     
-    // Divide lo que escribe el usuario por espacios (ej: ["123456", "78923"])
-    const terms = query.split(/\s+/);
+    // Divide por espacios y elimina elementos vacíos automáticos creados por espacios extras o intermedios
+    const terms = query.split(/\s+/).filter(t => t.length > 0);
     
     const filtered = cachedTeamCommands.filter(c => {
-        // Verifica que CADA término escrito coincida con el cliente O con el rival
+        const clientIdStr = String(c.client_id || '').toLowerCase();
+        const rivalIdStr = String(c.rival_id || '').toLowerCase();
+        // Mapea la misma estructura visual de texto que se renderiza en la lista
+        const fullCombinedLabel = `client: ${clientIdStr} ➜ rival: ${rivalIdStr}`.toLowerCase();
+        
+        // Verifica que CADA palabra buscada exista en el cliente, en el rival o en la etiqueta combinada
         return terms.every(term => 
-            c.client_id.toString().toLowerCase().includes(term) || 
-            c.rival_id.toString().toLowerCase().includes(term)
+            clientIdStr.includes(term) || 
+            rivalIdStr.includes(term) ||
+            fullCombinedLabel.includes(term)
         );
     });
     
