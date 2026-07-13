@@ -153,7 +153,7 @@ function analyzeAndParsePastedCommand(commandStr) {
 
     // 8. Test Value
     const testValMatch = commandStr.match(/--test-value\s+(\d+)/);
-    if (testValMatch) document.getElementById('test_value').value = testValMatch[1];
+    document.getElementById('test_value').value = testValMatch ? testValMatch[1] : '';
 
     importLocked = false;
     toggleRegexInput();
@@ -322,12 +322,13 @@ function renderHistoryList(commands) {
         const itemLabel = `Client: ${item.client_id} ➜ Rival: ${item.rival_id}`;
         const dateLabel = updatedDate && updatedDate !== createdDate ? `Edited: ${updatedDate}` : `Created: ${createdDate}`;
 
+        // Corrección Detalle 1: Ahora pasamos "command_test" en lugar de "command_launcher" para mantener el test_value al cargar
         div.innerHTML = `
             <div class="history-meta" style="display: flex; flex-direction: column; gap: 2px;">
                 <span class="history-title" style="font-family: monospace; font-size: 11px;">${itemLabel}</span>
                 <span style="font-size: 9px; color: #89b4fa;">${dateLabel}</span>
             </div>
-            <button class="history-edit-btn" onclick="triggerLoadFromSidebar('${item.id}', \`${encodeURIComponent(item.command_launcher)}\`, '${item.client_id}', '${item.rival_id}')">✏️ Load</button>
+            <button class="history-edit-btn" onclick="triggerLoadFromSidebar('${item.id}', \`${encodeURIComponent(item.command_test)}\`, '${item.client_id}', '${item.rival_id}')">✏️ Load</button>
         `;
         listContainer.appendChild(div);
     });
@@ -394,16 +395,13 @@ document.getElementById('search-history').addEventListener('input', function() {
         return;
     }
     
-    // Divide la búsqueda por espacios libres e ignora tokens vacíos
     const terms = query.split(/\s+/).filter(t => t.length > 0);
     
     const filtered = cachedTeamCommands.filter(c => {
-        // Blindaje estricto: Forzamos la conversión a texto seguro para evitar errores con nulos
         const clientIdStr = String(c.client_id || '').toLowerCase();
         const rivalIdStr = String(c.rival_id || '').toLowerCase();
         const fullCombinedLabel = `client: ${clientIdStr} ➜ rival: ${rivalIdStr}`.toLowerCase();
         
-        // El registro pasa el filtro si cada palabra escrita coincide en algún lugar
         return terms.every(term => 
             clientIdStr.includes(term) || 
             rivalIdStr.includes(term) ||
@@ -429,8 +427,20 @@ document.getElementById('output').addEventListener('input', function() {
             const cId = getVal('client_store_id');
             const rId = getVal('rival_store_id');
             const match = cachedTeamCommands.find(c => c.client_id == cId && c.rival_id == rId);
-            if (match) setEditingState(match.id, cId, rId);
-            else clearEditingState();
+            
+            if (match) {
+                // Corrección Detalle 2: Al escribir un par existente, cargamos el comando guardado en el parser para poblar el formulario
+                setEditingState(match.id, cId, rId);
+                if (match.command_test) {
+                    document.getElementById('output').value = match.command_test;
+                    analyzeAndParsePastedCommand(match.command_test);
+                    // Re-forzamos los IDs originales para evitar desfases del parser de texto plano
+                    document.getElementById('client_store_id').value = cId;
+                    document.getElementById('rival_store_id').value = rId;
+                }
+            } else {
+                clearEditingState();
+            }
         });
     }
 });
