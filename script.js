@@ -244,8 +244,8 @@ async function saveCommandToSupabase() {
     }
 
     const payload = { 
-        client_id: clientId, 
-        rival_id: rivalId, 
+        client_id: parseInt(clientId), 
+        rival_id: parseInt(rivalId), 
         command_test: generateCommand('test'),       
         command_launcher: generateCommand('launcher'), 
         updated_at: new Date().toISOString()
@@ -299,13 +299,13 @@ async function loadCommandsFromSupabase() {
         return;
     }
 
-    cachedTeamCommands = data; 
+    cachedTeamCommands = data || []; 
     renderHistoryList(cachedTeamCommands);
 }
 
 function renderHistoryList(commands) {
     const listContainer = document.getElementById('history-list');
-    if (commands.length === 0) {
+    if (!commands || commands.length === 0) {
         listContainer.innerHTML = `<div style="color: #a6adc8; font-size:12px;">No matches found.</div>`;
         return;
     }
@@ -347,17 +347,23 @@ function triggerLoadFromSidebar(id, encodedCommand, clientId, rivalId) {
 function setEditingState(id, clientId, rivalId) {
     document.getElementById('editing_command_id').value = id;
     const saveBtn = document.getElementById('btn-cloud-save');
-    saveBtn.innerText = `💾 Update Client ${clientId} vs ${rivalId} Config`;
-    saveBtn.style.backgroundColor = '#89b4fa';
-    document.getElementById('btn-cloud-cancel').classList.remove('hidden');
+    if (saveBtn) {
+        saveBtn.innerText = `💾 Update Client ${clientId} vs ${rivalId} Config`;
+        saveBtn.style.backgroundColor = '#89b4fa';
+    }
+    const cancelBtn = document.getElementById('btn-cloud-cancel');
+    if (cancelBtn) cancelBtn.classList.remove('hidden');
 }
 
 function clearEditingState() {
     document.getElementById('editing_command_id').value = '';
     const saveBtn = document.getElementById('btn-cloud-save');
-    saveBtn.innerText = '☁️ Save Current Configuration as New';
-    saveBtn.style.backgroundColor = '#a6e3a1';
-    document.getElementById('btn-cloud-cancel').classList.add('hidden');
+    if (saveBtn) {
+        saveBtn.innerText = '☁️ Save Current Configuration as New';
+        saveBtn.style.backgroundColor = '#a6e3a1';
+    }
+    const cancelBtn = document.getElementById('btn-cloud-cancel');
+    if (cancelBtn) cancelBtn.classList.add('hidden');
 }
 
 function copyCommand(mode) {
@@ -380,7 +386,7 @@ function copyCommand(mode) {
     }
 }
 
-// FILTRO AVANZADO MULTI-TÉRMINO (A PRUEBA DE BALAS - Admite buscar "ID_Cliente ID_Rival")
+// FILTRO AVANZADO MULTI-TÉRMINO BLINDADO (A PRUEBA DE REGISTROS CORRUPTOS O VACÍOS)
 document.getElementById('search-history').addEventListener('input', function() {
     const query = this.value.trim().toLowerCase();
     if (!query) {
@@ -388,16 +394,16 @@ document.getElementById('search-history').addEventListener('input', function() {
         return;
     }
     
-    // Divide por espacios y elimina elementos vacíos automáticos creados por espacios extras o intermedios
+    // Divide la búsqueda por espacios libres e ignora tokens vacíos
     const terms = query.split(/\s+/).filter(t => t.length > 0);
     
     const filtered = cachedTeamCommands.filter(c => {
+        // Blindaje estricto: Forzamos la conversión a texto seguro para evitar errores con nulos
         const clientIdStr = String(c.client_id || '').toLowerCase();
         const rivalIdStr = String(c.rival_id || '').toLowerCase();
-        // Mapea la misma estructura visual de texto que se renderiza en la lista
         const fullCombinedLabel = `client: ${clientIdStr} ➜ rival: ${rivalIdStr}`.toLowerCase();
         
-        // Verifica que CADA palabra buscada exista en el cliente, en el rival o en la etiqueta combinada
+        // El registro pasa el filtro si cada palabra escrita coincide en algún lugar
         return terms.every(term => 
             clientIdStr.includes(term) || 
             rivalIdStr.includes(term) ||
