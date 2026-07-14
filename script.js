@@ -109,7 +109,7 @@ function analyzeAndParsePastedCommand(commandStr) {
         document.getElementById('search_url').value = cleanUrl;
     }
 
-    // 4. Main Regex (Limpia modificadores, fin de línea $, comillas dobles y almohadillas al importar)
+    // 4. Main Regex: Remueve delimitadores '#' y '$' sin alterar comillas internas del usuario
     const regexMatch = commandStr.match(/"curl-impersonate"\s+"[^"]+"\s+"[^"]+"\s+'([^']+)'/);
     if (regexMatch) {
         let cleanRegex = regexMatch[1];
@@ -121,9 +121,6 @@ function analyzeAndParsePastedCommand(commandStr) {
         }
         if (cleanRegex.endsWith('$')) cleanRegex = cleanRegex.slice(0, -1);
         if (cleanRegex.startsWith('#') && cleanRegex.endsWith('#')) cleanRegex = cleanRegex.slice(1, -1);
-        
-        // Remover comillas dobles si envolvían completamente la expresión interna
-        if (cleanRegex.startsWith('"') && cleanRegex.endsWith('"')) cleanRegex = cleanRegex.slice(1, -1);
         
         document.getElementById('main_regex').value = cleanRegex;
     }
@@ -153,7 +150,7 @@ function analyzeAndParsePastedCommand(commandStr) {
         document.querySelector('input[name="conf_field_type"][value="NONE"]').checked = true;
     }
 
-    // Confirmation Regex (Limpia modificadores, fin de línea $, comillas dobles y almohadillas al importar)
+    // Confirmation Regex: Remueve delimitadores '#' y '$' sin alterar comillas internas del usuario
     const confRegexMatch = commandStr.match(/--confirmation-regex\s+'([^']+)'/);
     if (confRegexMatch) {
         let cleanConfRegex = confRegexMatch[1];
@@ -165,9 +162,6 @@ function analyzeAndParsePastedCommand(commandStr) {
         }
         if (cleanConfRegex.endsWith('$')) cleanConfRegex = cleanConfRegex.slice(0, -1);
         if (cleanConfRegex.startsWith('#') && cleanConfRegex.endsWith('#')) cleanConfRegex = cleanConfRegex.slice(1, -1);
-        
-        // Remover comillas dobles si envolvían completamente la expresión interna
-        if (cleanConfRegex.startsWith('"') && cleanConfRegex.endsWith('"')) cleanConfRegex = cleanConfRegex.slice(1, -1);
         
         document.getElementById('conf_regex').value = cleanConfRegex;
     }
@@ -203,14 +197,11 @@ function generateCommand(mode) {
     cmd += ` "${FIXED_METHOD}"`;
     
     if (getVal('proxy')) cmd += ` "${getVal('proxy')}"`;
+    if (getVal('search_url')) cmd += ` "${getVal('search_url')}"`;
     
-    if (getVal('search_url')) {
-        cmd += ` "${getVal('search_url')}"`;
-    }
-    
-    // Inyección automática de comillas dobles y caracteres "#" en la Regex Principal
+    // AJUSTE: Inyección directa sin añadir comillas dobles forzadas por código
     if (getVal('main_regex')) {
-        let regexText = `#"${getVal('main_regex')}"#`;
+        let regexText = `#${getVal('main_regex')}#`;
         if (checkActive('chk_regex_si')) regexText += 'si';
         cmd += ` '${regexText}'`;
     }
@@ -230,9 +221,9 @@ function generateCommand(mode) {
     if (confirmationType !== 'NONE') {
         cmd += ` --confirmation-field ${confirmationType}`;
         
-        // Inyección automática de comillas dobles y caracteres "#" en la Confirmation Regex
+        // AJUSTE: Inyección directa sin añadir comillas dobles forzadas por código
         if (getVal('conf_regex')) {
-            let confRegexText = `#"${getVal('conf_regex')}"#`;
+            let confRegexText = `#${getVal('conf_regex')}#`;
             if (checkActive('chk_conf_regex_si')) confRegexText += 'si';
             cmd += ` --confirmation-regex '${confRegexText}'`;
         }
@@ -253,7 +244,7 @@ function updateRealTimeView() {
     }
 }
 
-// PERSISTENCIA EN SUPABASE (Con notificaciones flotantes integradas)
+// PERSISTENCIA EN SUPABASE
 async function saveCommandToSupabase() {
     const editingId = document.getElementById('editing_command_id').value;
     const clientId = getVal('client_store_id');
@@ -281,7 +272,7 @@ async function saveCommandToSupabase() {
         if (error) {
             showToast('Error updating configuration: ' + error.message, 'error');
         } else {
-            showToast(`Configuration updated successfully! 📝☁️`, 'info'); // AZUL AL ACTUALIZAR
+            showToast(`Configuration updated successfully! 📝☁️`, 'info');
             clearEditingState();
             await loadCommandsFromSupabase();
         }
@@ -301,9 +292,9 @@ async function saveCommandToSupabase() {
             .insert([payload]);
 
         if (error) {
-            showToast('Error saving configuration: ' + error.message, 'error'); // ROJO SI FALLA
+            showToast('Error saving configuration: ' + error.message, 'error');
         } else {
-            showToast(`New configuration saved to cloud! 🚀☁️`, 'success'); // VERDE AL INGRESAR
+            showToast(`New configuration saved to cloud! 🚀☁️`, 'success');
             await loadCommandsFromSupabase();
         }
     }
@@ -401,9 +392,9 @@ function copyCommand(mode) {
     setTimeout(updateRealTimeView, 1500);
 
     if(mode === 'test') {
-        showToast(`TEST command copied to clipboard! 🧪`, 'success'); // VERDE AL COPIAR
+        showToast(`TEST command copied to clipboard! 🧪`, 'success');
     } else {
-        showToast(`LAUNCHER command copied to clipboard! 🚀`, 'success'); // VERDE AL COPIAR
+        showToast(`LAUNCHER command copied to clipboard! 🚀`, 'success');
     }
 }
 

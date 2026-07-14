@@ -102,7 +102,7 @@ textarea.code-output { font-family: 'Fira Code', 'Courier New', monospace; heigh
     display: flex;
     align-items: center;
     justify-content: space-between;
-    animation: slideIn 0.3s ease forward;
+    animation: slideIn 0.3s ease forwards;
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
 .toast.success { background-color: var(--green); }
